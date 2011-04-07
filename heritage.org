@@ -1,0 +1,9 @@
+
+* Claims_Y1
+** Evaluation function
+The evaluation function use log(p_i+1) transformation
+
+** Stategy
+*** Divide patients with one or more claims
+*** Patients who claim only once
+*** Patients who claim more than once

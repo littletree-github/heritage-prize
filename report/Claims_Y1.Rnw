@@ -1,0 +1,70 @@
+\documentclass{article}
+
+\title{Explore the features of Claims\_Y1}
+
+\begin{document}
+
+\maketitle
+
+\section{Load Data}
+<<>>=
+# load data
+test.n = -1 # set to -1 for all data
+claims.y1 <- read.csv('../data/Claims_Y1.csv', nrows=test.n, string=F)
+member.y1 <- read.csv('../data/Members_Y1.csv', string=F)
+dih.y1 <- read.csv('../data/DayInHospital_Y2.csv', string=F); dih.y1[,2] <- log2(dih.y1[,2]+1)
+@ 
+
+\section{Compare the 1-claim and multiple claims}
+<<fig=T>>=
+# compare the once claim and multiple claim
+claims.y1.count <- aggregate(ProviderID ~ MemberID, data=claims.y1, length); colnames(claims.y1.count)[2] <- 'Count'; claims.y1.count <- merge(claims.y1.count, dih.y1, by=1);
+layout(matrix(1:2,2,1))
+barplot(table(claims.y1.count$Count))
+boxplot(with(claims.y1.count, split(DaysInHospital_Y2, Count)))
+@ 
+
+\section{Focus on people who only claim once}
+<<>>=
+# focus on people who only claim once
+claims.y1.once <- subset(claims.y1, MemberID %in% with(claims.y1.count, MemberID[Count==1]))
+once.df <- merge(merge(claims.y1.once, member.y1, by=1), dih.y1, by=1)
+@ 
+
+\subsection{Specialty}
+<<fig=T>>=
+library(lattice)
+barchart.pct <- function(dta=once.df.2, lab='PrimaryConditionGroup') {
+  dta.sub <- dta[,c('MemberID', lab, 'DaysInHospital_Y2')]; colnames(dta.sub)[2] <- 'Condition'
+  dta.agg <- within(merge(aggregate(MemberID ~ Condition + DaysInHospital_Y2, data=dta.sub, length), aggregate(MemberID ~ Condition, data=dta.sub, length), by=1), {pct = MemberID.x / MemberID.y})
+  print(barchart(Condition ~ pct, group = DaysInHospital_Y2, stack=T, data=dta.agg))
+}
+
+barchart.pct(once.df.2, 'specialty')
+@
+ 
+\subsection{PrimaryConditionGroup}
+<<fig=T>>=
+barchart.pct(once.df.2, 'PrimaryConditionGroup')
+  
+@ 
+\subsection{CharlsonIndex}
+<<fig=T>>=
+barchart.pct(once.df.2, 'CharlsonIndex')
+@ 
+\subsection{PlaceSvc}
+<<fig=T>>=
+barchart.pct(once.df.2, 'placesvc')
+@
+
+\subsection{sex}
+<<fig=T>>=
+barchart.pct(once.df.2, 'sex')
+@
+
+\subsection{AgeAtFirstClaim}
+<<fig=T>>=
+barchart.pct(once.df.2, 'AgeAtFirstClaim')
+@ 
+ 
+\end{document}
